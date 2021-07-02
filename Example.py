@@ -1,7 +1,5 @@
 import nmr_129_main_rework_postprocessingobjectss as zulf
 import matplotlib.pyplot as plt
-import numpy as np
-import csv
 
 names = [' N-15 UREA DMSO 2048  avg_avg1.000000',
          '15N pyridine 16avg',

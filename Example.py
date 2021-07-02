@@ -1,19 +1,7 @@
-import nmr_129_main_rework_postprocessingobjectss as zulf
+import ZULFDSP as zulf
 import matplotlib.pyplot as plt
 
-names = [' N-15 UREA DMSO 2048  avg_avg1.000000',
-         '15N pyridine 16avg',
-         'CS methanol 5.000000 uA_avg',
-         'FA try_21000.000_mag_avg',
-         'Me_Pyrid_05pi_100s_pol_avg',
-         'N-15 pyridine 256 avg manually',
-         'Sabre_pyridine2_avg',
-         'TMP 64 avg with x pulse_avg1']
-
-#%%
-sample = 7
-dmmp = zulf.Spectrum(data_src = f'C:/Users/Fotonika/Desktop/ZULF DSP/\
-pracafitting/data/{names[sample]}.dat',
+example = zulf.Spectrum(data_src = "ExampleData.dat",
                      ms_to_cut = 100,
                      filter = False, 
                      predict = False,
@@ -25,18 +13,26 @@ pracafitting/data/{names[sample]}.dat',
                      )
 
 
+#%%
+example.plot("phase_corrected", "ftr")
 
-#%% Step by step postprocessing shown using spectrum.plot method
+#%% Step by step postprocessing shown using spectrum.plot method.
 
+# List of all postprocessing stages that can be plotted.
 stages = ['opened', 'cut', 'debased', 'predicted',  'zerofilled',
-          'apodized']
+          'apodized', 'phase_corrected']
+
+# Iterate over each stage and plot area of interest of each data mode.
 for stage in stages:
     plt.figure()
     plt.suptitle(stage)
+    # Time domain
     plt.subplot(1, 3, 1)
-    dmmp.plot(stage,'time', 'all')
+    example.plot(stage,'time', 'all')
+    # Frequency domain - magnitude
     plt.subplot(1, 3, 2)
-    dmmp.plot(stage,'ftm', (260, 310))
+    example.plot(stage,'ftm', (5, 50))
+    # Frequency domain - real part
     plt.subplot(1, 3, 3)
-    dmmp.plot(stage,'ftr', (260, 310))
+    example.plot(stage,'ftr', (5, 50))
 

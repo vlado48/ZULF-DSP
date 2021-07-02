@@ -187,7 +187,7 @@ class ZulfCore:
         except:
             raise NameError(f"{operation_ref} is not a valid postprocessing \
                             stage. Use: 'opened', 'cut', 'debased', 'predicted',\
-                            'zerofilled', 'apodized', 'phasecorrected'")
+                            'zerofilled', 'apodized', 'phase_corrected'")
 
         for result in results:
             if result.operation == look_for:

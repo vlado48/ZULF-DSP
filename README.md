@@ -5,6 +5,7 @@ The aim of this module is to provide well rounded digital signal processing that
 Project is created with:
 * Python 3.6
 * Spectrum 0.8.0 (Library)
+* nmrglue 0.9.0 (Library)
 * Python standard libraries
 	
 ## Setup

@@ -74,6 +74,8 @@ class Spectrum(ZulfCore):
         """
     
         ZulfCore.__init__(self)
+        self.kwargs = kwargs
+        
         self.update_settings(kwargs)
         self.postprocessed = []        
         self.__postprocess(0)
@@ -157,5 +159,4 @@ class Spectrum(ZulfCore):
             step = PostprocessingStep(self, operation)
             self.postprocessed.append(step)
             
-
     

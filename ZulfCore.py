@@ -168,9 +168,9 @@ class ZulfCore:
         return freq, vals
 
 
-    def get_results(self, operation_ref : str):
-        """Returns PostprocessingStep with results based on string reference"""
-        
+    def op_by_string_reference(self, operation_ref : str):
+        """Returns operation corresponding to string reference"""
+
         op_refs ={
                  "opened": self.open_op,
                  "cut": self.cut_op,
@@ -180,14 +180,20 @@ class ZulfCore:
                  "zerofilled": self.zerofill_op,
                  "apodized": self.apodize_op,
                  "phase_corrected": self.phasecorrect_op
-                 }
-        results = self.postprocessed  
+                 }        
         try:
-            look_for = op_refs[operation_ref]
+            operation = op_refs[operation_ref]
         except:
             raise NameError(f"{operation_ref} is not a valid postprocessing \
                             stage. Use: 'opened', 'cut', 'debased', 'predicted',\
-                            'zerofilled', 'apodized', 'phase_corrected'")
+                            'zerofilled', 'apodized', 'phase_corrected'")        
+        return operation                            
+
+    def get_results(self, operation_ref : str):
+        """Returns PostprocessingStep with results based on string reference"""
+        
+        look_for = self.op_by_string_reference(operation_ref)
+        results = self.postprocessed  
 
         for result in results:
             if result.operation == look_for:
@@ -215,12 +221,17 @@ class ZulfCore:
             as (0, 10). Denotes seconds in "time" mode and Hz in "ftm"/"ftr"
             modes.
         """
+        stage = self.get_results(stage)
+        x, y = self.__get_data_by_mode(stage, mode)
+        
+        self.__plotpriv(x, y, rng, stage.operation.name)
+
+    def __get_data_by_mode(self, stage, mode):
+        """Returns specific data using mode string reference"""
+        
         if mode != 'time' and mode != 'ftr' and mode != 'ftm':
             raise TypeError(f"{mode} is not valid mode, must be 'time', \
                             'ftr' or 'ftm'")     
-
-        stage = self.get_results(stage)
-
         # Cache data from given stage
         if mode == 'time':
             x, y = stage.x, stage.y
@@ -228,9 +239,9 @@ class ZulfCore:
             x, y = stage.fft[0], stage.fft[1]
         # If magnitude FT requested get absolute value of spectral coeffs.
         if mode == 'ftm':            
-            y = np.abs(y)
-
-        self.__plotpriv(x, y, rng, stage.operation.name)
+            y = np.abs(y)        
+            
+        return x, y            
 
     def __plotpriv(self, x, y, rng, *labels):
         """Helper function handling drawing of figures
@@ -637,7 +648,7 @@ class ZulfCore:
             self.postprocessed[-1].x = np.array(x)
             self.postprocessed[-1].fft = (freq, vals)
             
-            plt.close("all")
+            plt.close()
 
         btn_save.on_clicked(save)
         saveax._btn = btn_save
@@ -716,3 +727,155 @@ class ZulfCore:
                 end = j + 2
                 break
         return start, end
+
+
+    def iterate(self, pltstage : str, pltmode :str, pltrng, param1, args1,
+                *arbargs):
+        """
+        Method used to iteratively compare different postprocessing settings.
+        
+        Iterate method allows user to quickly find optimal postrocessing settings
+        for given data by passing in the name of parameter and set of arguments to
+        be used. Results of postprocessing with each of passed settings are then
+        plotted for user to visually compare. It is possible to iterate over two
+        parameters at the same time, aiding cases where postprocessing operations
+        influence each other's effect. All combinations settings will be plotted as
+        per user's choice of data stage, data mode and data range.
+    
+        Parameters
+        ----------
+        stage : {'opened', 'cut', 'debased', 'predicted', 'zerofilled',
+                 'apodized', 'phasecorrected'}
+            User reference to postprocessing stage to be plotted.
+        mode : {'time', 'ftr', 'ftm'}
+            Mode of data to be plotted. 
+            - 'time' plots a time signal
+            - 'ftr' plots a real part of a spectrum.
+            - 'ftm' plots a magnitude spectrum.
+        rng : iterable of floats or "all", default = "all"
+            Data range to be plotted. Must be iterable of floats such
+            as (0, 10). Denotes seconds in "time" mode and Hz in "ftm"/"ftr"
+            modes.
+        param1 : {'data_src','cut','ms_to_cut','debase','fit_order','filter',
+                  'filter_freq','predict','prediction_fill','prediction_order',
+                  'prediction_scan','zerofill','apodize','decay_c','phase_correct',
+                  'phase_shift'}
+            String reference to postprocessing parameter to be iterated.
+        args1 : iterable
+            Iterable of viable parameters for param1
+        *arbargs : param & args
+            Optional second parameter and it's args to be iterated over param1
+        """
+        from ZULFDSP import Spectrum
+
+    
+        # Argument check `pltstage` by passing it to helper method. Return is not
+        # needed
+        _ = self.op_by_string_reference(pltstage)    
+    
+        # List of all possible settings that can be iterated in Spectrum class
+        settings = ['data_src',
+                    'cut',
+                    'ms_to_cut',
+                    'debase',
+                    'fit_order',
+                    'filter',
+                    'filter_freq',
+                    'predict',
+                    'prediction_fill',
+                    'prediction_order',
+                    'prediction_scan',
+                    'zerofill',
+                    'apodize',
+                    'decay_c',
+                    'phase_correct',
+                    'phase_shift'  
+                    ]
+    
+        # Argument checks                        
+        name_err = f" is not a valid setting that can be iterated.\
+                    Valid iterable settings : {settings}"
+        
+        if param1 not in settings:
+            raise NameError(param1, name_err) 
+    
+        # See whether we iterate over two parameters. If so do argument check.
+        param2 = None
+        args2 = None
+        if len(arbargs) != 0:
+            assert len(arbargs) == 2, "Use of arbitrary arguments only allows for\
+                entering another iterable parameter 'param2' and it's set of\
+                arguments to iterate over 'args2' "                    
+            param2 = arbargs[0]
+            args2 = arbargs[1]
+            if param2 not in settings:
+                raise NameError(param2, name_err) 
+            
+        # Create copy of original kwargs to iterate settings on
+        kwargs_temp = dict(self.kwargs)
+        # For each argument on given parameter
+        for i, argument1 in enumerate(args1):
+            print(kwargs_temp)
+            kwargs_temp[param1] = argument1
+            print(kwargs_temp)
+            # For each argument of second beiing iterated (if exists)
+            if param2 != None:                     
+                for j, argument2 in enumerate(args2):
+                    kwargs_temp[param2] = argument2
+                    # Reconstruct temporary spectrum w. new parameters
+                    spectrum_temp = Spectrum(kwargs_temp)
+    
+                    # Save the results 
+                    result = self.get_results(pltstage)
+                    if j == 0:
+                        results2 = [result]
+                    else:
+                        results2.append(result)
+                # Save results in 2D list
+                if i == 0:
+                    results = [results2]      
+                else:
+                    results.append(results2)  
+            
+            # If only one parameter to iterate over
+            else:
+                spectrum_temp = Spectrum(**kwargs_temp)
+                
+                result = self.get_results(pltstage)
+                if i == 0:
+                    results = [result]
+                else:
+                    results.append(result)
+    
+        # Create figure that will hold multiple plots
+        plt.figure()
+        plt.xlabel('Time [s]' if pltmode == 'time' else 'Freq [Hz]')
+        plt.ylabel('Amplitude [V]')
+        
+        # Plot the gathered results.
+        for i, result1 in enumerate(results):
+            # If only one parameter is iterated all plots are in single premade
+            # figure.
+            if param2 == None:
+                name = param1 + ' ' + str(args1[i])
+                x, y = self.__get_data_by_mode(result1, pltmode)            
+                self.__plotpriv(x, y, pltrng, name)
+                plt.legend()
+            
+            # If iterating over two parameters where param1 has n elements in args1
+            # and param2 has m elements in args 2, ther will be n figures created
+            # each containing m plots,
+            else:
+                plt.title(param1 + ' ' + str(args1[i]))
+                for j, result2 in enumerate(result1):
+                    name = param2 + ' ' + str(args2[j])
+                    x, y = self.__get_data_by_mode(result2, pltmode)                 
+                    self.__plotpriv(x, y, pltrng, name)
+                    plt.legend()
+                # If this was not last figure, create a new figure.
+                if result1 is not results[-1]:
+                    plt.figure()
+                    plt.xlabel('Time [s]' if pltmode == 'time'
+                               else 'Freq [Hz]')
+                    plt.ylabel('Amplitude [V]')
+    

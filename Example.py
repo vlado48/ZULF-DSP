@@ -9,13 +9,18 @@ example = zulf.Spectrum(data_src = "ExampleData.dat",
                      prediction_order = 100,
                      prediction_fill = 100,
                      phase_correct = True,
-                     phase_shift = "manual"
+                     phase_shift = 0
                      )
 
 
 #%%
 example.plot("phase_corrected", "ftr")
 
+#%%
+print(dir(example))
+#%%
+example.iterate("phase_corrected", "ftr", "all", "phase_shift", (10, 100))
+                                                                      
 #%% Step by step postprocessing shown using spectrum.plot method.
 
 # List of all postprocessing stages that can be plotted.

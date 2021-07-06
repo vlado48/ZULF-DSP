@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 
 example = zulf.Spectrum(data_src = "ExampleData.dat",
                      ms_to_cut = 100,
-                     filter = False, 
-                     predict = False,
+                     filter = True, 
+                     predict = True,
                      prediction_scan = 1000,
                      prediction_order = 100,
                      prediction_fill = 100,
@@ -12,15 +12,9 @@ example = zulf.Spectrum(data_src = "ExampleData.dat",
                      phase_shift = 0
                      )
 
-
-#%%
+#%% Plot the whole phase corrected real spectra
 example.plot("phase_corrected", "ftr")
 
-#%%
-print(dir(example))
-#%%
-example.iterate("phase_corrected", "ftr", "all", "phase_shift", (10, 100))
-                                                                      
 #%% Step by step postprocessing shown using spectrum.plot method.
 
 # List of all postprocessing stages that can be plotted.
@@ -41,3 +35,9 @@ for stage in stages:
     plt.subplot(1, 3, 3)
     example.plot(stage,'ftr', (5, 50))
 
+#%% Example of utilising the iterate method - compare effect of filter
+example.iterate("phase_corrected", "ftr", "all", "filter", (True, False))
+                                                                          
+#%% Example of iterating over two parameters
+example.iterate("phase_corrected", "ftr", "all", "prediction_scan", (160, 4000),
+                "prediction_order", (25, 150))

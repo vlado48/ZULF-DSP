@@ -154,7 +154,7 @@ class ZulfCore:
                     operation.parameters[arg] = user_settings[arg]
                     break
                 elif arg == operation.name:
-                    operation.allowed = user_settings[arg]
+                    operation.enabled = user_settings[arg]
                     break
                 elif i == len(self.operations) - 1:
                     raise TypeError(f'{arg} is unknown keyword')
@@ -815,18 +815,16 @@ class ZulfCore:
         kwargs_temp = dict(self.kwargs)
         # For each argument on given parameter
         for i, argument1 in enumerate(args1):
-            print(kwargs_temp)
             kwargs_temp[param1] = argument1
-            print(kwargs_temp)
             # For each argument of second beiing iterated (if exists)
             if param2 != None:                     
                 for j, argument2 in enumerate(args2):
                     kwargs_temp[param2] = argument2
                     # Reconstruct temporary spectrum w. new parameters
-                    spectrum_temp = Spectrum(kwargs_temp)
+                    spectrum_temp = Spectrum(**kwargs_temp)
     
                     # Save the results 
-                    result = self.get_results(pltstage)
+                    result = spectrum_temp.get_results(pltstage)
                     if j == 0:
                         results2 = [result]
                     else:
@@ -841,7 +839,7 @@ class ZulfCore:
             else:
                 spectrum_temp = Spectrum(**kwargs_temp)
                 
-                result = self.get_results(pltstage)
+                result = spectrum_temp.get_results(pltstage)
                 if i == 0:
                     results = [result]
                 else:

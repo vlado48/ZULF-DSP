@@ -73,8 +73,10 @@ class Spectrum(ZulfCore):
             "manual" option prompts an interactive plot.
         """
     
-        ZulfCore.__init__(self)
+        ZulfCore.__init__(self)      
         self.update_settings(kwargs)
+        self.kwargs = kwargs
+        
         self.postprocessed = []        
         self.__postprocess(0)
 
@@ -157,5 +159,4 @@ class Spectrum(ZulfCore):
             step = PostprocessingStep(self, operation)
             self.postprocessed.append(step)
             
-
     

@@ -100,7 +100,8 @@ class ZulfCore:
         
         self.sampling_rate =     None
         self.open_op =           Operation(self, "open", self.open,
-                                      {"data_src": "manual"}, True);
+                                      {"data_src": "manual",
+                                       "sampling_rate": "auto"}, True);
         self.cut_op =            Operation(self, "cut", self.cut,
                                       {"ms_to_cut": 0}, True);
         self.debase_op =         Operation(self, "debase", self.debase, 
@@ -115,7 +116,7 @@ class ZulfCore:
                                        'prediction_scan': 'all'},
                                       True);
         self.zerofill_op =       Operation(self, "zerofill", self.zerofill,
-                                      {}, True);
+                                      {'length_after_fill': 'double'}, True);
         self.apodize_op =        Operation(self, "apodize", self.apodize,
                                       {"decay_c": -0.25}, True);
         self.phasecorrect_op =   Operation(self, "phase_correct", self.phasecorrect,
@@ -278,7 +279,7 @@ class ZulfCore:
         plt.plot(x[start:end], y[start:end], label=lbl)
 
 
-    def open(self, x, y, fft, data_src="manual"):
+    def open(self, x, y, fft, data_src="manual", sampling_rate="auto"):
         """
         Opens the file or variable containing raw time signal data.
         
@@ -292,6 +293,9 @@ class ZulfCore:
             - "Manual" prompts dialog window.
             - "path/filename.dat" directly accesses file on harddrive
             - iterable (:list:, :tuple:) containing x, y arrays
+        sampling_rate: number or "auto"
+            Provides the sampling rate of time signal that is used to determine
+            the frequency spacing of spectra.
             
         Notes
         -----
@@ -299,6 +303,10 @@ class ZulfCore:
         :method:`~.open` they are unused, and only present to make function
         signature compatible with other postprocessing methods.
         """
+        if sampling_rate != "auto" and type(sampling_rate) != int \
+            and type(sampling_rate) != float:
+                raise TypeError("sampling rate parameter has to be number or \
+'auto'")
         
         if isinstance(data_src, str):
             if data_src == 'manual':
@@ -316,13 +324,18 @@ class ZulfCore:
         x, y, *_ = zip(*data)
         x = np.array(x)
         y = np.array(y)
-        self.sampling_rate = len(x) / (x[-1] - x[0])        
+        
+        if sampling_rate == "auto":
+            self.sampling_rate = len(x) / (x[-1] - x[0])  
+        else:
+            self.sampling_rate = sampling_rate
+        
         fft = ZulfCore.fft(self, y) 
         
         return x, y, fft
     
 
-    def cut(self, x, y, fft, ms_to_cut):
+    def cut(self, x, y, fft, ms_to_cut=0):
         """
         Function cuts datapoints from the beggining of time signal data.
         
@@ -346,7 +359,7 @@ class ZulfCore:
         """
         srate = self.sampling_rate
 
-        if ms_to_cut != 0 or ms_to_cut is False:
+        if ms_to_cut != 0:
             cut_points = int(srate * ms_to_cut / 1000)
             x = np.delete(x, range(len(x))[:cut_points])
             y = np.delete(y, range(len(y))[:cut_points])
@@ -530,7 +543,7 @@ class ZulfCore:
         return x, y, fft
 
 
-    def zerofill(self, x, y, fft):
+    def zerofill(self, x, y, fft, length_after_fill="double"):
         """
         Zero-pads time signal and returns copy of the data.
 
@@ -540,6 +553,10 @@ class ZulfCore:
             Time signal timestamps.
         y : numpy.ndarray
             Time signal values.
+        length: int or ""double
+                Either doubles the number of datapoints by adding zeroes, then
+                round to N = 2^k or adds zeros so that total length is equal to
+                this parameter.
 
         Notes
         -----
@@ -549,12 +566,28 @@ class ZulfCore:
         """        
         
         srate = self.sampling_rate
+        length = length_after_fill
         
+        # Args check
+        if length != "double" and type(length) != int:
+            raise TypeError("The zeropadding lengths parameter has to be int\
+or 'double'")
+        if type(length) == int and len(y) > length:
+            raise IndexError(f"Zero padding lengths cannot be smaller than\
+the data length ({len(y)})")            
+            
+        
+        if length == "double":
         # Adds zeros equal to total number of datapoints then adds additional
         # zeros such that total number of datapoints is N = 2^k.
-        y = ng.process.proc_base.zf_double(np.array(y), 1)
-        y = ng.process.proc_base.zf_auto(y)
-    
+            y = ng.process.proc_base.zf_double(np.array(y), 1)
+            y = ng.process.proc_base.zf_auto(y)
+        # Creates zeros array of desired lenght,then places datapoints at start.
+        else:
+            y_new = np.zeros(length)
+            y_new[:len(y)] = y
+            y = y_new
+            
         # Generates timestamps corresponding to the newly added zero datapoints
         tofill = len(y)-len(x)
         t_last = x[-1]+ tofill/srate

@@ -1,5 +1,6 @@
 import numpy as np
 from ZulfCore import ZulfCore
+import matplotlib.pyplot as plt
 
 class Spectrum(ZulfCore):
     """
@@ -145,12 +146,13 @@ class Spectrum(ZulfCore):
 
         def get_last_values(self, current_op):
             """Returns data from most recet postprocessing operation"""
- 
+            
             if current_op != self.outer_instance.open_op:
-                current_i = list(enabled_operations).index(current_op)
-                previous_i = current_i - 1
-                previous_step = self.outer_instance.postprocessed[previous_i]
-                return previous_step.x, previous_step.y, previous_step.fft
+                previous_step = self.outer_instance.postprocessed[-1]
+                x = np.array(previous_step.x) 
+                y = np.array(previous_step.y)
+                fft = np.array(previous_step.fft)
+                return x, y, fft
             return None, None, None            
 
 

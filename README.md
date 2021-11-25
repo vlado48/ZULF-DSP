@@ -1,5 +1,9 @@
 ## ZULF DSP
-The aim of this module is to provide well rounded digital signal processing that specifically adressess needs of Zero-to-Ultralow field NMR time signals. Single object constructor call acts as entire DSP pipeline. Default values provide robust parameters that give decent results in most cases of ZULF NMR data. Methods then provide options for quick visualization and parameter iteration. Spectrum object stores the data (time and frequency domains) as they were at each postprocessing stage for later investigation.
+The aim of this module is to provide well rounded digital signal processing that specifically adressess needs of Zero-to-Ultralow field NMR time signals. Single object constructor call acts as entire DSP pipeline. 
+
+Default values provide robust parameters that give decent results in most cases of ZULF NMR data. Methods then provide options for quick visualization and parameter iteration. 
+
+Spectrum object stores the data (time and frequency domains) as they were at each postprocessing stage for later investigation.
 	
 ## Dependencies
 Project will require:
@@ -48,6 +52,7 @@ Signal is multiplied by decaying exponential. Apodization serves primarily two p
 - Improve SNR by decreasing amplitude of later part of signal where SNR is lower due to sample's loss of polarization.
 
 <img src="https://user-images.githubusercontent.com/34378363/143436781-9bf0bd0a-e7d6-4059-bfbc-e5ed8edcda72.png" width=50% height=50%>
+
 SNR of spectra is imroved at the cost of total amplitude
 
 <img src="https://user-images.githubusercontent.com/34378363/143437055-6194a549-74d0-4a27-8ba8-c280b812e18f.png" width=50% height=50%>
@@ -65,6 +70,7 @@ Allows for plotting of selected postprocessing stage, time or frequency domain a
 
 #### Spectrum.iterate()
 Is used to iterate a postprocessing parameter and display the comparison on selected data mode and range. It is possible to iterate over two parameters, showing spectra with all the permutations of the parameters. (Use cautiously). On example we can see what effect on final spectra would have a different amount of starting points removed:
+
 <img src="https://user-images.githubusercontent.com/34378363/143439563-c06f4f98-46fe-4bdf-ba2a-810bda1933e9.png" width=50% height=50%>
 
 

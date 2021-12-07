@@ -30,7 +30,9 @@ datapoints useless.
 
 #### Signal Debasing
 Signal can be decomposed into Noise + Signal + Bacground. Bacground comes from magnetometer detecting static magnetic field change (loss of polarization of sample). High order polynomial is fitted using linear regression and substracted from the signal.
+
 <img src="https://user-images.githubusercontent.com/34378363/143436140-0d2f02d5-752c-45dd-88e7-c123e4e71941.png" width=50% height=50%>
+
 #### Backward Prediction
 Corrupted points that were removed create a linear phase shift across the spectra. Using inverted autoregressive coeffecients we create backward predicting model and fill the missing points with spectrally identical signal.
 
